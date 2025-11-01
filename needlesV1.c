@@ -22,22 +22,14 @@ int main(int argc, char *argv[]) {
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC, &start);
 
-    #pragma omp parallel
-    {
-        unsigned int seed = time(NULL) ^ omp_get_thread_num();
-        long long local_crosses = 0;
-
-        #pragma omp for nowait
-        for (long long i = 0; i < n; ++i) {
-            double y_center = (rand_r(&seed) * factor) * (D / 2.0);
-            double theta = (rand_r(&seed) * factor) * (M_PI / 2.0);
-            if (y_center <= (L / 2.0) * sin(theta)) {
-                ++local_crosses;
-            }
+    #pragma omp parallel for reduction(+:crosses)
+    for (long long i = 0; i < n; ++i) {
+        unsigned int seed = time(NULL) ^ (i + omp_get_thread_num());
+        double y_center = (rand_r(&seed) * factor) * (D / 2.0);
+        double theta = (rand_r(&seed) * factor) * (M_PI / 2.0);
+        if (y_center <= (L / 2.0) * sin(theta)) {
+            ++crosses;
         }
-
-        #pragma omp atomic
-        crosses += local_crosses;
     }
 
     clock_gettime(CLOCK_MONOTONIC, &end);
