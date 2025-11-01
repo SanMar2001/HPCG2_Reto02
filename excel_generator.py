@@ -13,7 +13,7 @@ archivos = [
 ]
 
 # Valores de K usados en el script bash
-valores_k = [1, 2, 4, 6, 8]
+valores_k = [2, 4, 6, 8]
 
 with pd.ExcelWriter("resultados_experimentos.xlsx", engine="openpyxl") as writer:
     for archivo in archivos:
@@ -21,9 +21,16 @@ with pd.ExcelWriter("resultados_experimentos.xlsx", engine="openpyxl") as writer
             print(f"⚠️ Archivo no encontrado: {archivo}")
             continue
 
-        # Leer todas las líneas con datos
+        # Leer todas las líneas con datos (solo números)
         with open(archivo, "r") as f:
             lineas = [l.strip() for l in f if l.strip()]
+
+        # Intentar convertir todas las líneas a float
+        try:
+            lineas = [float(x) for x in lineas]
+        except ValueError:
+            print(f"⚠️ Algunos valores no son numéricos en {archivo}. Se omitirán.")
+            lineas = [float(x) for x in lineas if x.replace('.', '', 1).isdigit()]
 
         # Detectar tipo de archivo (V0 = sin K, V1/V2 = con K)
         version = re.search(r"V(\d+)", archivo).group(1)
@@ -45,6 +52,6 @@ with pd.ExcelWriter("resultados_experimentos.xlsx", engine="openpyxl") as writer
 
         # Guardar en una hoja con el nombre del archivo
         hoja = os.path.splitext(archivo)[0]
-        df.to_excel(writer, sheet_name=hoja, index=False)
+        df.to_excel(writer, sheet_name=hoja, index=False, float_format="%.9f")
 
-print("✅ Archivo Excel 'resultados_experimentos.xlsx' generado correctamente.")
+print("✅ Archivo Excel 'resultados_experimentos.xlsx' generado correctamente con valores numéricos.")
