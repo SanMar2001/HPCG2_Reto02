@@ -18,14 +18,22 @@ int main(int argc, char *argv[]) {
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC, &start);
 
-    #pragma omp parallel for reduction(+:hits)
-    for (long long k = 0; k < n; ++k) {
-        unsigned int seed = time(NULL) ^ (k + omp_get_thread_num());
-        double x = rand_r(&seed) * factor;
-        double y = rand_r(&seed) * factor;
-        if (x * x + y * y <= 1.0) {
-            ++hits;
+    #pragma omp parallel
+    {
+        unsigned int seed = time(NULL) ^ omp_get_thread_num();
+        long long local_hits = 0;
+
+        #pragma omp for nowait
+        for (long long k = 0; k < n; ++k) {
+            double x = rand_r(&seed) * factor;
+            double y = rand_r(&seed) * factor;
+            if (x*x + y*y <= 1.0) {
+                ++local_hits;
+            }
         }
+
+        #pragma omp atomic
+        hits += local_hits;
     }
 
     clock_gettime(CLOCK_MONOTONIC, &end);
