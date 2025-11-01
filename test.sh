@@ -15,7 +15,7 @@ done
 
 for j in {1..10}
 do
-    for k in 1 2 4 6 8
+    for k in 2 4 6 8
     do
         export OMP_NUM_THREADS=$k
         ./needlesV1 500000000 >> needle_timesV1.doc
